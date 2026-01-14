@@ -63,7 +63,8 @@ This project has strict security requirements:
 ## TypeScript Configuration
 
 - Target: ES2022
-- Module: ES2022 (Node16 module resolution)
+- Module: Node16
+- Module Resolution: Node16
 - Strict mode enabled
 - Output directory: `./build`
 
