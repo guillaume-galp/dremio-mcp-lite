@@ -122,6 +122,15 @@ Get the execution plan for a query.
 explain_query({ sql: "SELECT * FROM source.schema.table" })
 ```
 
+## Security
+
+This MCP server implements several security measures:
+
+- **Read-Only Operations**: Only SELECT queries are allowed. All modifications (INSERT, UPDATE, DELETE, etc.) are blocked.
+- **SQL Injection Protection**: Table paths are properly escaped using SQL identifier quoting to prevent injection attacks.
+- **Query Validation**: SQL queries are validated to ensure they are SELECT statements, even when prefixed with comments or whitespace.
+- **Personal Access Tokens**: Uses Dremio PAT authentication stored securely in .env file (never commit .env to version control).
+
 ## Development
 
 ### Build
