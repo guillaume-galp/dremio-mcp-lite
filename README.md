@@ -46,18 +46,34 @@ cp .env.example .env
 
 ### As an MCP Server
 
-Add to your MCP client configuration (e.g., VS Code):
+Add to your MCP client configuration (e.g., VS Code `mcp.json`):
 
 ```json
 {
   "mcpServers": {
     "dremio": {
+      "type": "stdio",
       "command": "npx",
-      "args": ["@guillaume-galp/dremio-mcp-lite"]
+      "args": [
+        "-y",
+        "@guillaume-galp/dremio-mcp-lite"
+      ],
+      "envFile": "${userHome}/.dremio-mcp.env",
+      "gallery": true
     }
   }
 }
 ```
+
+**Configuration Notes:**
+- `type`: Must be `"stdio"` for standard input/output communication
+- `-y`: Auto-confirms npx package installation
+- `envFile`: Path to your environment file containing `DREMIO_URL` and `DREMIO_PAT`
+  - Recommended: Use `${userHome}` variable: `"${userHome}/.dremio-mcp.env"`
+  - Windows absolute path: `"C:\\Users\\<YourUsername>\\.dremio-mcp.env"`
+  - macOS/Linux absolute path: `"/Users/<YourUsername>/.dremio-mcp.env"` or `"/home/<YourUsername>/.dremio-mcp.env"`
+  - Replace `<YourUsername>` with your actual username
+- `gallery`: Optional, set to `true` to show in MCP gallery
 
 Or if installed globally:
 
@@ -65,7 +81,10 @@ Or if installed globally:
 {
   "mcpServers": {
     "dremio": {
-      "command": "dremio-mcp-lite"
+      "type": "stdio",
+      "command": "dremio-mcp-lite",
+      "envFile": "${userHome}/.dremio-mcp.env",
+      "gallery": true
     }
   }
 }
@@ -144,6 +163,26 @@ npm run build
 ```bash
 npm start
 ```
+
+### Publishing to npm
+
+The package is automatically published to npm when a version tag is pushed:
+
+1. Update the version in `package.json`:
+   ```bash
+   npm version patch  # or minor, or major
+   ```
+
+2. Push the tag to GitHub:
+   ```bash
+   git push origin main --tags
+   ```
+
+3. The GitHub Actions workflow will automatically build and publish to npm
+
+**Prerequisites:**
+- `NPM_ACCESS_TOKEN` must be configured in GitHub repository secrets
+- The token must have publish access to the `@guillaume-galp` scope on npmjs.org
 
 ## Requirements
 
