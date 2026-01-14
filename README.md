@@ -69,8 +69,10 @@ Add to your MCP client configuration (e.g., VS Code `mcp.json`):
 - `type`: Must be `"stdio"` for standard input/output communication
 - `-y`: Auto-confirms npx package installation
 - `envFile`: Path to your environment file containing `DREMIO_URL` and `DREMIO_PAT`
-  - Windows example: `"C:\\Users\\YourUsername\\AppData\\Roaming\\Code\\User\\mcp.env"`
-  - macOS/Linux example: `"${userHome}/.dremio-mcp.env"` or `"/home/username/.dremio-mcp.env"`
+  - Use `${userHome}` variable for cross-platform compatibility: `"${userHome}/.dremio-mcp.env"`
+  - Windows absolute path example: `"C:\\Users\\<YourUsername>\\AppData\\Roaming\\Code\\User\\mcp.env"`
+  - macOS/Linux absolute path example: `"/Users/<YourUsername>/.dremio-mcp.env"` or `"/home/<YourUsername>/.dremio-mcp.env"`
+  - Replace `<YourUsername>` with your actual username
 - `gallery`: Optional, set to `true` to show in MCP gallery
 
 Or if installed globally:
