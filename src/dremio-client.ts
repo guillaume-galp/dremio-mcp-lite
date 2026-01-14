@@ -29,6 +29,27 @@ export interface ExplainResult {
   text: string;
 }
 
+/**
+ * Validate that SQL is a SELECT query
+ * This removes SQL comments and checks if the query starts with SELECT
+ */
+export function isSelectQuery(sql: string): boolean {
+  // Remove leading whitespace and SQL comments
+  let cleaned = sql.trim();
+  
+  // Remove single-line comments (-- comment)
+  cleaned = cleaned.replace(/--[^\n]*\n/g, '\n');
+  
+  // Remove multi-line comments (/* comment */)
+  cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+  
+  // Trim again after removing comments
+  cleaned = cleaned.trim();
+  
+  // Check if it starts with SELECT (case-insensitive)
+  return /^SELECT\s/i.test(cleaned);
+}
+
 export class DremioClient {
   private client: AxiosInstance;
 
@@ -42,6 +63,31 @@ export class DremioClient {
     });
   }
 
+  /**
+   * Escape SQL identifier by wrapping in double quotes and escaping any existing quotes
+   */
+  private escapeIdentifier(identifier: string): string {
+    // Replace any double quotes with escaped double quotes
+    const escaped = identifier.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+
+  /**
+   * Build a fully qualified table name from path components
+   */
+  private buildTableReference(tablePath: string[]): string {
+    if (!tablePath || tablePath.length === 0) {
+      throw new Error('Table path cannot be empty');
+    }
+    // Validate each component
+    for (const component of tablePath) {
+      if (!component || typeof component !== 'string') {
+        throw new Error('Invalid table path component');
+      }
+    }
+    return tablePath.map(part => this.escapeIdentifier(part)).join('.');
+  }
+
   async getCatalog(path?: string[]): Promise<CatalogEntity> {
     const pathStr = path ? path.join('/') : '';
     const url = pathStr ? `/api/v3/catalog/${encodeURIComponent(pathStr)}` : '/api/v3/catalog';
@@ -50,8 +96,8 @@ export class DremioClient {
   }
 
   async getTableSchema(tablePath: string[]): Promise<TableSchema[]> {
-    const pathStr = tablePath.join('.');
-    const query = `SELECT * FROM ${pathStr} LIMIT 0`;
+    const tableRef = this.buildTableReference(tablePath);
+    const query = `SELECT * FROM ${tableRef} LIMIT 0`;
     const result = await this.executeQuery(query);
     return result.schema;
   }
@@ -101,8 +147,8 @@ export class DremioClient {
   }
 
   async previewTable(tablePath: string[]): Promise<QueryResult> {
-    const pathStr = tablePath.join('.');
-    const query = `SELECT * FROM ${pathStr} LIMIT 10`;
+    const tableRef = this.buildTableReference(tablePath);
+    const query = `SELECT * FROM ${tableRef} LIMIT 10`;
     return this.executeQuery(query, 10);
   }
 
@@ -128,7 +174,19 @@ export class DremioClient {
     return results;
   }
 
+  /**
+   * Validate that SQL is a SELECT query
+   */
+  private isSelectQuery(sql: string): boolean {
+    return isSelectQuery(sql);
+  }
+
   async explainQuery(sql: string): Promise<ExplainResult> {
+    // Validate that the query is a SELECT statement before explaining
+    if (!this.isSelectQuery(sql)) {
+      throw new Error('Only SELECT queries can be explained');
+    }
+    
     const explainSql = `EXPLAIN PLAN FOR ${sql}`;
     const result = await this.executeQuery(explainSql);
     

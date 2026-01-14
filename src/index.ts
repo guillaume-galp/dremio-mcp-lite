@@ -8,7 +8,7 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import dotenv from 'dotenv';
-import { DremioClient } from './dremio-client.js';
+import { DremioClient, isSelectQuery } from './dremio-client.js';
 
 // Load environment variables
 dotenv.config();
@@ -180,8 +180,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!sql) {
           throw new Error('sql is required');
         }
-        // Validate it's a SELECT query
-        if (!sql.trim().toUpperCase().startsWith('SELECT')) {
+        // Validate it's a SELECT query using the robust validation
+        if (!isSelectQuery(sql)) {
           throw new Error('Only SELECT queries are allowed');
         }
         const maxRows = Math.min((args?.max_rows as number) || 1000, 1000);
