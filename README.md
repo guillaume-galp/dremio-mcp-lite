@@ -1,2 +1,156 @@
 # dremio-mcp-lite
-Nodejs/Typescript lite Dremio MPC tool,  to be used locally in your favorite IDE
+
+A TypeScript MCP (Model Context Protocol) server for Dremio data exploration. This tool enables AI assistants to interact with Dremio through a set of read-only operations.
+
+## Features
+
+- **Fast Startup**: Optimized for <1s startup time for VS Code stdio MCP
+- **Read-Only Operations**: Safe exploration of your Dremio data catalog
+- **6 Core Tools**:
+  - `catalog_browse`: List sources, spaces, folders, and tables
+  - `schema_get`: Get table schemas
+  - `sql_query`: Execute SELECT queries (max 1000 rows)
+  - `table_preview`: Preview first 10 rows of a table
+  - `search_catalog`: Find tables by name
+  - `explain_query`: Get query execution plans
+
+## Installation
+
+```bash
+npm install @guillaume-galp/dremio-mcp-lite
+```
+
+## Configuration
+
+Create a `.env` file in your project root:
+
+```bash
+DREMIO_URL=http://localhost:9047
+DREMIO_PAT=your_personal_access_token_here
+```
+
+Or copy from the example:
+
+```bash
+cp .env.example .env
+```
+
+### Getting a Dremio Personal Access Token
+
+1. Log in to your Dremio instance
+2. Go to Settings → Personal Access Tokens
+3. Click "Create Token"
+4. Copy the token and add it to your `.env` file
+
+## Usage
+
+### As an MCP Server
+
+Add to your MCP client configuration (e.g., VS Code):
+
+```json
+{
+  "mcpServers": {
+    "dremio": {
+      "command": "npx",
+      "args": ["@guillaume-galp/dremio-mcp-lite"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "dremio": {
+      "command": "dremio-mcp-lite"
+    }
+  }
+}
+```
+
+### Available Tools
+
+#### catalog_browse
+Browse the Dremio catalog structure.
+
+```typescript
+// List all sources
+catalog_browse()
+
+// Browse a specific path
+catalog_browse({ path: ["source_name", "folder"] })
+```
+
+#### schema_get
+Get the schema definition of a table.
+
+```typescript
+schema_get({ table_path: ["source", "schema", "table"] })
+```
+
+#### sql_query
+Execute SELECT queries (read-only).
+
+```typescript
+sql_query({ 
+  sql: "SELECT * FROM source.schema.table WHERE id > 100",
+  max_rows: 500  // Optional, default 1000
+})
+```
+
+#### table_preview
+Quick preview of table data (first 10 rows).
+
+```typescript
+table_preview({ table_path: ["source", "schema", "table"] })
+```
+
+#### search_catalog
+Search for tables and datasets by name.
+
+```typescript
+search_catalog({ search_term: "customer" })
+```
+
+#### explain_query
+Get the execution plan for a query.
+
+```typescript
+explain_query({ sql: "SELECT * FROM source.schema.table" })
+```
+
+## Security
+
+This MCP server implements several security measures:
+
+- **Read-Only Operations**: Only SELECT queries are allowed. All modifications (INSERT, UPDATE, DELETE, etc.) are blocked.
+- **SQL Injection Protection**: Table paths are properly escaped using SQL identifier quoting to prevent injection attacks.
+- **Query Validation**: SQL queries are validated to ensure they are SELECT statements, even when prefixed with comments or whitespace.
+- **Personal Access Tokens**: Uses Dremio PAT authentication stored securely in .env file (never commit .env to version control).
+
+## Development
+
+### Build
+
+```bash
+npm run build
+```
+
+### Run Locally
+
+```bash
+npm start
+```
+
+## Requirements
+
+- Node.js >= 18
+- Access to a Dremio instance (default port: 9047)
+- Valid Dremio Personal Access Token
+
+## License
+
+MIT
