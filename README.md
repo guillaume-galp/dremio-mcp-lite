@@ -162,6 +162,26 @@ npm run build
 npm start
 ```
 
+### Publishing to npm
+
+The package is automatically published to npm when a version tag is pushed:
+
+1. Update the version in `package.json`:
+   ```bash
+   npm version patch  # or minor, or major
+   ```
+
+2. Push the tag to GitHub:
+   ```bash
+   git push origin main --tags
+   ```
+
+3. The GitHub Actions workflow will automatically build and publish to npm
+
+**Prerequisites:**
+- `NPM_ACCESS_TOKEN` must be configured in GitHub repository secrets
+- The token must have publish access to the `@guillaume-galp` scope on npmjs.org
+
 ## Requirements
 
 - Node.js >= 18
