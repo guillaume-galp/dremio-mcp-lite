@@ -46,18 +46,32 @@ cp .env.example .env
 
 ### As an MCP Server
 
-Add to your MCP client configuration (e.g., VS Code):
+Add to your MCP client configuration (e.g., VS Code `mcp.json`):
 
 ```json
 {
   "mcpServers": {
     "dremio": {
+      "type": "stdio",
       "command": "npx",
-      "args": ["@guillaume-galp/dremio-mcp-lite"]
+      "args": [
+        "-y",
+        "@guillaume-galp/dremio-mcp-lite"
+      ],
+      "envFile": "${userHome}/.dremio-mcp.env",
+      "gallery": true
     }
   }
 }
 ```
+
+**Configuration Notes:**
+- `type`: Must be `"stdio"` for standard input/output communication
+- `-y`: Auto-confirms npx package installation
+- `envFile`: Path to your environment file containing `DREMIO_URL` and `DREMIO_PAT`
+  - Windows example: `"C:\\Users\\YourUsername\\AppData\\Roaming\\Code\\User\\mcp.env"`
+  - macOS/Linux example: `"${userHome}/.dremio-mcp.env"` or `"/home/username/.dremio-mcp.env"`
+- `gallery`: Optional, set to `true` to show in MCP gallery
 
 Or if installed globally:
 
@@ -65,7 +79,10 @@ Or if installed globally:
 {
   "mcpServers": {
     "dremio": {
-      "command": "dremio-mcp-lite"
+      "type": "stdio",
+      "command": "dremio-mcp-lite",
+      "envFile": "${userHome}/.dremio-mcp.env",
+      "gallery": true
     }
   }
 }
