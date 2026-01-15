@@ -175,6 +175,11 @@ The package is automatically published to npm when a version tag is pushed:
 
 2. Push the tag to GitHub:
    ```bash
+   git push origin master --tags
+   ```
+   
+   Or if using the main branch:
+   ```bash
    git push origin main --tags
    ```
 
