@@ -1,10 +1,10 @@
 {
   "name": "@guillaume-galp/dremio-mcp-lite",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "TypeScript MCP server for Dremio data exploration",
   "type": "module",
   "bin": {
-    "dremio-mcp-lite": "./build/index.js"
+    "dremio-mcp-lite": "build/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/guillaume-galp/dremio-mcp-lite.git"
+    "url": "git+https://github.com/guillaume-galp/dremio-mcp-lite.git"
   },
   "bugs": {
     "url": "https://github.com/guillaume-galp/dremio-mcp-lite/issues"
