@@ -1,6 +1,7 @@
 export interface DremioConfig {
     url: string;
     pat: string;
+    rejectUnauthorized?: boolean;
 }
 export interface CatalogEntity {
     id: string;

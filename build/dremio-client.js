@@ -1,4 +1,5 @@
 import axios from 'axios';
+import https from 'https';
 /**
  * Validate that SQL is a SELECT query
  * This removes SQL comments and checks if the query starts with SELECT
@@ -18,13 +19,20 @@ export function isSelectQuery(sql) {
 export class DremioClient {
     client;
     constructor(config) {
-        this.client = axios.create({
+        const axiosConfig = {
             baseURL: config.url,
             headers: {
                 'Authorization': `Bearer ${config.pat}`,
                 'Content-Type': 'application/json',
             },
-        });
+        };
+        // Configure SSL certificate verification
+        if (config.rejectUnauthorized === false) {
+            axiosConfig.httpsAgent = new https.Agent({
+                rejectUnauthorized: false,
+            });
+        }
+        this.client = axios.create(axiosConfig);
     }
     /**
      * Escape SQL identifier by wrapping in double quotes and escaping any existing quotes

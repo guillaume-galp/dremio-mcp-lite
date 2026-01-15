@@ -1,8 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
+import https from 'https';
 
 export interface DremioConfig {
   url: string;
   pat: string;
+  rejectUnauthorized?: boolean;
 }
 
 export interface CatalogEntity {
@@ -54,13 +56,22 @@ export class DremioClient {
   private client: AxiosInstance;
 
   constructor(config: DremioConfig) {
-    this.client = axios.create({
+    const axiosConfig: any = {
       baseURL: config.url,
       headers: {
         'Authorization': `Bearer ${config.pat}`,
         'Content-Type': 'application/json',
       },
-    });
+    };
+
+    // Configure SSL certificate verification
+    if (config.rejectUnauthorized === false) {
+      axiosConfig.httpsAgent = new https.Agent({
+        rejectUnauthorized: false,
+      });
+    }
+
+    this.client = axios.create(axiosConfig);
   }
 
   /**
