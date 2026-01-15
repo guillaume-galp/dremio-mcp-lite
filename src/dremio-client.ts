@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import https from 'https';
 
 export interface DremioConfig {
@@ -56,7 +56,7 @@ export class DremioClient {
   private client: AxiosInstance;
 
   constructor(config: DremioConfig) {
-    const axiosConfig: any = {
+    const axiosConfig: AxiosRequestConfig = {
       baseURL: config.url,
       headers: {
         'Authorization': `Bearer ${config.pat}`,
