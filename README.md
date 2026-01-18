@@ -27,12 +27,32 @@ Create a `.env` file in your project root:
 ```bash
 DREMIO_URL=http://localhost:9047
 DREMIO_PAT=your_personal_access_token_here
+
+# SSL Configuration (optional)
+# Set to 'false' to disable SSL certificate verification for self-signed certificates
+# WARNING: Only use in development/testing environments
+DREMIO_REJECT_UNAUTHORIZED=true
 ```
 
 Or copy from the example:
 
 ```bash
 cp .env.example .env
+```
+
+### SSL Certificate Configuration
+
+When connecting to Dremio instances with self-signed SSL certificates (common in internal/corporate environments), you may encounter certificate verification errors. To disable SSL certificate verification:
+
+1. Set `DREMIO_REJECT_UNAUTHORIZED=false` in your `.env` file
+2. **Important**: Only use this setting in development or testing environments
+3. **Never** disable certificate verification in production environments
+
+Example for self-signed certificates:
+```bash
+DREMIO_URL=https://dremio.internal.company.com:9047
+DREMIO_PAT=your_personal_access_token_here
+DREMIO_REJECT_UNAUTHORIZED=false
 ```
 
 ### Getting a Dremio Personal Access Token

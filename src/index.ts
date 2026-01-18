@@ -15,6 +15,7 @@ dotenv.config();
 
 const DREMIO_URL = process.env.DREMIO_URL;
 const DREMIO_PAT = process.env.DREMIO_PAT;
+const DREMIO_REJECT_UNAUTHORIZED = process.env.DREMIO_REJECT_UNAUTHORIZED !== 'false';
 
 if (!DREMIO_URL || !DREMIO_PAT) {
   console.error('Error: DREMIO_URL and DREMIO_PAT must be set in .env file');
@@ -25,6 +26,7 @@ if (!DREMIO_URL || !DREMIO_PAT) {
 const dremioClient = new DremioClient({
   url: DREMIO_URL,
   pat: DREMIO_PAT,
+  rejectUnauthorized: DREMIO_REJECT_UNAUTHORIZED,
 });
 
 // Define MCP tools
