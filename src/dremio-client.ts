@@ -38,16 +38,16 @@ export interface ExplainResult {
 export function isSelectQuery(sql: string): boolean {
   // Remove leading whitespace and SQL comments
   let cleaned = sql.trim();
-  
+
   // Remove single-line comments (-- comment)
   cleaned = cleaned.replace(/--[^\n]*\n/g, '\n');
-  
+
   // Remove multi-line comments (/* comment */)
   cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
-  
+
   // Trim again after removing comments
   cleaned = cleaned.trim();
-  
+
   // Check if it starts with SELECT (case-insensitive)
   return /^SELECT\s/i.test(cleaned);
 }
@@ -100,8 +100,12 @@ export class DremioClient {
   }
 
   async getCatalog(path?: string[]): Promise<CatalogEntity> {
-    const pathStr = path ? path.join('/') : '';
-    const url = pathStr ? `/api/v3/catalog/${encodeURIComponent(pathStr)}` : '/api/v3/catalog';
+    let url = '/api/v3/catalog';
+    if (path && path.length > 0) {
+      // Encode each path component separately and join with /
+      const encodedPath = path.map(p => encodeURIComponent(p)).join('/');
+      url = `/api/v3/catalog/${encodedPath}`;
+    }
     const response = await this.client.get(url);
     return response.data;
   }
@@ -119,17 +123,17 @@ export class DremioClient {
     });
 
     const jobId = response.data.id;
-    
+
     // Poll for job completion
     let jobState = 'RUNNING';
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     while (jobState === 'RUNNING' || jobState === 'STARTING' || jobState === 'ENQUEUED') {
       if (attempts >= maxAttempts) {
         throw new Error('Query timeout');
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 1000));
       const jobResponse = await this.client.get(`/api/v3/job/${jobId}`);
       jobState = jobResponse.data.jobState;
@@ -168,20 +172,32 @@ export class DremioClient {
     const rootCatalog = await this.getCatalog();
     const results: CatalogEntity[] = [];
 
-    const searchRecursive = async (entity: CatalogEntity) => {
-      const name = entity.path[entity.path.length - 1] || '';
-      if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        results.push(entity);
+    const searchRecursive = (entity: CatalogEntity) => {
+      // Handle entities with path array
+      if (entity.path && Array.isArray(entity.path) && entity.path.length > 0) {
+        const name = entity.path[entity.path.length - 1] || '';
+        if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
+          results.push(entity);
+        }
       }
 
-      if (entity.children) {
+      if (entity.children && Array.isArray(entity.children)) {
         for (const child of entity.children) {
-          await searchRecursive(child);
+          searchRecursive(child);
         }
       }
     };
 
-    await searchRecursive(rootCatalog);
+    // Handle root catalog response format
+    const catalogData = (rootCatalog as any).data || [rootCatalog];
+    if (Array.isArray(catalogData)) {
+      for (const entity of catalogData) {
+        searchRecursive(entity);
+      }
+    } else {
+      searchRecursive(catalogData);
+    }
+
     return results;
   }
 
@@ -197,13 +213,13 @@ export class DremioClient {
     if (!this.isSelectQuery(sql)) {
       throw new Error('Only SELECT queries can be explained');
     }
-    
+
     const explainSql = `EXPLAIN PLAN FOR ${sql}`;
     const result = await this.executeQuery(explainSql);
-    
+
     // Combine all rows into a single text output
     const text = result.rows.map(row => Object.values(row).join(' ')).join('\n');
-    
+
     return { text };
   }
 }
