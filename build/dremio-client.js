@@ -58,8 +58,12 @@ export class DremioClient {
         return tablePath.map(part => this.escapeIdentifier(part)).join('.');
     }
     async getCatalog(path) {
-        const pathStr = path ? path.join('/') : '';
-        const url = pathStr ? `/api/v3/catalog/${encodeURIComponent(pathStr)}` : '/api/v3/catalog';
+        let url = '/api/v3/catalog';
+        if (path && path.length > 0) {
+            // Encode each path component separately and join with /
+            const encodedPath = path.map(p => encodeURIComponent(p)).join('/');
+            url = `/api/v3/catalog/${encodedPath}`;
+        }
         const response = await this.client.get(url);
         return response.data;
     }
@@ -113,18 +117,30 @@ export class DremioClient {
         // Search through catalog recursively
         const rootCatalog = await this.getCatalog();
         const results = [];
-        const searchRecursive = async (entity) => {
-            const name = entity.path[entity.path.length - 1] || '';
-            if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                results.push(entity);
+        const searchRecursive = (entity) => {
+            // Handle entities with path array
+            if (entity.path && Array.isArray(entity.path) && entity.path.length > 0) {
+                const name = entity.path[entity.path.length - 1] || '';
+                if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    results.push(entity);
+                }
             }
-            if (entity.children) {
+            if (entity.children && Array.isArray(entity.children)) {
                 for (const child of entity.children) {
-                    await searchRecursive(child);
+                    searchRecursive(child);
                 }
             }
         };
-        await searchRecursive(rootCatalog);
+        // Handle root catalog response format
+        const catalogData = rootCatalog.data || [rootCatalog];
+        if (Array.isArray(catalogData)) {
+            for (const entity of catalogData) {
+                searchRecursive(entity);
+            }
+        }
+        else {
+            searchRecursive(catalogData);
+        }
         return results;
     }
     /**

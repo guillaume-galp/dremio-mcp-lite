@@ -134,7 +134,7 @@ schema_get({ table_path: ["source", "schema", "table"] })
 Execute SELECT queries (read-only).
 
 ```typescript
-sql_query({ 
+sql_query({
   sql: "SELECT * FROM source.schema.table WHERE id > 100",
   max_rows: 500  // Optional, default 1000
 })
@@ -197,7 +197,7 @@ The package is automatically published to npm when a version tag is pushed:
    ```bash
    git push origin master --tags
    ```
-   
+
    Or if using the main branch:
    ```bash
    git push origin main --tags
@@ -206,7 +206,7 @@ The package is automatically published to npm when a version tag is pushed:
 3. The GitHub Actions workflow will automatically build and publish to npm
 
 **Prerequisites:**
-- `NPM_ACCESS_TOKEN` must be configured in GitHub repository secrets
+- `NPM_TOKEN` must be configured in GitHub repository secrets
 - The token must have publish access to the `@guillaume-galp` scope on npmjs.org
 
 ## Requirements
