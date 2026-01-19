@@ -118,47 +118,67 @@ export class DremioClient {
   }
 
   async executeQuery(sql: string, maxRows: number = 1000): Promise<QueryResult> {
-    const response = await this.client.post('/api/v3/sql', {
-      sql: sql,
-    });
+    try {
+      const requestBody = {
+        sql: sql
+      };
+      console.error('executeQuery request:', JSON.stringify(requestBody));
+      const response = await this.client.post('/api/v3/sql', requestBody);
 
-    const jobId = response.data.id;
+      const jobId = response.data.id;
 
-    // Poll for job completion
-    let jobState = 'RUNNING';
-    let attempts = 0;
-    const maxAttempts = 30;
+      // Poll for job completion
+      let jobState = 'RUNNING';
+      let attempts = 0;
+      const maxAttempts = 30;
 
-    while (jobState === 'RUNNING' || jobState === 'STARTING' || jobState === 'ENQUEUED') {
-      if (attempts >= maxAttempts) {
-        throw new Error('Query timeout');
+      while (jobState === 'RUNNING' || jobState === 'STARTING' || jobState === 'ENQUEUED') {
+        if (attempts >= maxAttempts) {
+          throw new Error('Query timeout');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const jobResponse = await this.client.get(`/api/v3/job/${jobId}`);
+        jobState = jobResponse.data.jobState;
+
+        // If job failed, get error details
+        if (jobState === 'FAILED' || jobState === 'CANCELED') {
+          const errorMessage = jobResponse.data.errorMessage || 'Unknown error';
+          const queryError = jobResponse.data.queryError || '';
+          throw new Error(`Query failed with state: ${jobState}. Error: ${errorMessage}${queryError ? '. Details: ' + queryError : ''}`);
+        }
+
+        attempts++;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const jobResponse = await this.client.get(`/api/v3/job/${jobId}`);
-      jobState = jobResponse.data.jobState;
-      attempts++;
+      if (jobState !== 'COMPLETED') {
+        throw new Error(`Query failed with state: ${jobState}`);
+      }
+
+      // Get results
+      const resultsResponse = await this.client.get(`/api/v3/job/${jobId}/results`, {
+        params: { limit: maxRows },
+      });
+
+      const schema: TableSchema[] = resultsResponse.data.schema?.map((field: any) => ({
+        name: field.name,
+        type: field.type,
+      })) || [];
+
+      return {
+        rowCount: resultsResponse.data.rowCount || 0,
+        schema: schema,
+        rows: resultsResponse.data.rows || [],
+      };
+    } catch (error: any) {
+      console.error('executeQuery error:', error);
+      console.error('error.response:', error.response?.data);
+      if (error.response) {
+        // Include response data for debugging
+        throw new Error(`Query failed: ${error.message}. Status: ${error.response.status}. Data: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
     }
-
-    if (jobState !== 'COMPLETED') {
-      throw new Error(`Query failed with state: ${jobState}`);
-    }
-
-    // Get results
-    const resultsResponse = await this.client.get(`/api/v3/job/${jobId}/results`, {
-      params: { limit: maxRows },
-    });
-
-    const schema: TableSchema[] = resultsResponse.data.schema?.map((field: any) => ({
-      name: field.name,
-      type: field.type,
-    })) || [];
-
-    return {
-      rowCount: resultsResponse.data.rowCount || 0,
-      schema: schema,
-      rows: resultsResponse.data.rows || [],
-    };
   }
 
   async previewTable(tablePath: string[]): Promise<QueryResult> {
