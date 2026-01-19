@@ -1,6 +1,6 @@
 {
   "name": "@guillaume-galp/dremio-mcp-lite",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "TypeScript MCP server for Dremio data exploration",
   "type": "module",
   "bin": {

@@ -167,7 +167,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 if (!isSelectQuery(sql)) {
                     throw new Error('Only SELECT queries are allowed');
                 }
-                const maxRows = Math.min(args?.max_rows || 1000, 1000);
+                const maxRows = Math.min(args?.max_rows || 500, 500);
                 const result = await dremioClient.executeQuery(sql, maxRows);
                 return {
                     content: [

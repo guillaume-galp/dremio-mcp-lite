@@ -73,12 +73,13 @@ export class DremioClient {
         const result = await this.executeQuery(query);
         return result.schema;
     }
-    async executeQuery(sql, maxRows = 1000) {
+    async executeQuery(sql, maxRows = 500) {
         try {
+            // Dremio API has a maximum limit of 500 rows
+            const limitedMaxRows = Math.min(maxRows, 500);
             const requestBody = {
                 sql: sql
             };
-            console.error('executeQuery request:', JSON.stringify(requestBody));
             const response = await this.client.post('/api/v3/sql', requestBody);
             const jobId = response.data.id;
             // Poll for job completion
@@ -105,7 +106,7 @@ export class DremioClient {
             }
             // Get results
             const resultsResponse = await this.client.get(`/api/v3/job/${jobId}/results`, {
-                params: { limit: maxRows },
+                params: { limit: limitedMaxRows },
             });
             const schema = resultsResponse.data.schema?.map((field) => ({
                 name: field.name,
@@ -118,8 +119,6 @@ export class DremioClient {
             };
         }
         catch (error) {
-            console.error('executeQuery error:', error);
-            console.error('error.response:', error.response?.data);
             if (error.response) {
                 // Include response data for debugging
                 throw new Error(`Query failed: ${error.message}. Status: ${error.response.status}. Data: ${JSON.stringify(error.response.data)}`);
