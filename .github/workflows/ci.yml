@@ -41,7 +41,7 @@ jobs:
   publish:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
 
     permissions:
       contents: read
@@ -51,30 +51,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Print context
-      run: |
-        echo "Event: $GITHUB_EVENT_NAME"
-        echo "Ref: $GITHUB_REF"
-        echo "Repo: $GITHUB_REPOSITORY"
-        echo "Actor: $GITHUB_ACTOR"
-
-    - name: Debug token presence
-      run: |
-        if [ -z "$NODE_AUTH_TOKEN" ]; then
-          echo "TOKEN IS EMPTY"
-          exit 1
-        else
-          echo "TOKEN IS PRESENT"
-        fi
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-    - name: Setup Node.js
+    - name: Setup Node.js + npm auth
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         registry-url: 'https://registry.npmjs.org'
-        token: ${{ secrets.NPM_TOKEN }}   # ← npm token here
+        token: ${{ secrets.NPM_TOKEN }}
         cache: 'npm'
 
     - name: Install dependencies
@@ -83,19 +65,15 @@ jobs:
     - name: Extract version from tag
       id: get_version
       run: |
-        # Extract version from tag (v1.0.0 -> 1.0.0)
         VERSION=${GITHUB_REF#refs/tags/v}
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Publishing version: $VERSION"
 
     - name: Update package version
-      run: |
-        npm version ${{ steps.get_version.outputs.version }} --no-git-tag-version
+      run: npm version ${{ steps.get_version.outputs.version }} --no-git-tag-version
 
     - name: Build
       run: npm run build
 
     - name: Publish to npm
       run: npm publish --access public --provenance
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
